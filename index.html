@@ -17,11 +17,9 @@
     <script src="components/filter.js"></script>
     <script src="components/wordcloud.js"></script>
     <script src="components/map.js"></script>
-    <script src="components/bubble.js"></script>
     <script src="components/correlation.js"></script>
     <script src="components/pie.js"></script>
-    <script src="components/datatable.js"></script>
-
+    
     <title>Smart Phone Crash Analysis</title>
     <style>
         body {
@@ -196,7 +194,7 @@
     </div>
 
     <script>
-        let data, currentFilteredData, filterPanel, dataTable, wordcloud, worldMap, bubbleChart, correlationMatrix, pieChart;
+        let data, currentFilteredData, filterPanel, wordcloud, worldMap, correlationMatrix, pieChart;
 
         // Simple navbar height calculation for desktop/laptop only
         function updateNavbarHeight() {
@@ -241,12 +239,6 @@
             }
         }
 
-        function updateBubbleChart(dataToUse = currentFilteredData || data) {
-            if (bubbleChart) {
-                bubbleChart.update(dataToUse);
-            }
-        }
-
         function updateCorrelationMatrix(dataToUse = currentFilteredData || data) {
             if (correlationMatrix) {
                 correlationMatrix.update(dataToUse);
@@ -256,12 +248,6 @@
         function updatePieChart(dataToUse = currentFilteredData || data) {
             if (pieChart) {
                 pieChart.update(dataToUse);
-            }
-        }
-
-        function updateDataTable(dataToUse = currentFilteredData || data) {
-            if (dataTable) {
-                dataTable.update(dataToUse, data.columns);
             }
         }
 
@@ -279,10 +265,8 @@
                 try {
                     updateWordCloud(filteredData);
                     updateMap(filteredData);
-                    updateBubbleChart(filteredData);
                     updateCorrelationMatrix(filteredData);
                     updatePieChart(filteredData);
-                    updateDataTable(filteredData);
                     
                     console.log(`Updated visualizations with ${filteredData.length} records`, filters);
                 } catch (error) {
@@ -308,16 +292,11 @@
                 worldMap = new WorldMap("#map");
                 await worldMap.initialize();
 
-                bubbleChart = new BubbleChart("#bubble", { multiline: true });
-                bubbleChart.initialize();
-
                 correlationMatrix = new CorrelationMatrix("#correlation");
                 correlationMatrix.initialize();
 
                 pieChart = new PieChart("#pie");
                 pieChart.initialize();
-
-                dataTable = new DataTable("#data-table");
 
                 console.log('All components initialized successfully');
             } catch (error) {
@@ -361,10 +340,8 @@
 
                     updateWordCloud();
                     updateMap();
-                    updateBubbleChart();
                     updateCorrelationMatrix();
                     updatePieChart();
-                    updateDataTable();
 
                     console.log('Application initialized successfully');
                 } catch (error) {
