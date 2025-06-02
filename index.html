@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+
+    <script src="components/filter.js"></script>
+    <script src="components/wordcloud.js"></script>
+    <script src="components/map.js"></script>
+    <script src="components/bubble.js"></script>
+    <script src="components/correlation.js"></script>
+    <script src="components/pie.js"></script>
+    <script src="components/datatable.js"></script>
+
+    <title>Smart Phone Crash Analysis</title>
+    <style>
+        body {
+            overflow-y: auto;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            width: 95%;
+            background: white;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            padding: 20px 20px;
+        }
+
+        .content-area {
+            min-width: 1100;
+            padding: 20px;
+        }
+
+        .visualization-container {
+            min-width: 1000px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0);
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .visualization-container svg {
+            min-width: 1000px;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .visualization-container-half {
+            min-width: 400px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0);
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        /* In the <style> tag in index.html */
+        .brushed {
+            stroke-width: 1;
+            stroke: gray;
+            r: 5;
+        }
+
+        /* Filter panel specific styles */
+        .filter-div {
+            position: sticky;
+            top: 20px;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Smart Phone Crash Analysis</span>
+                <div class="navbar-text">
+                    <small class="text-muted">Information Visualization, SKKU 2025 Spring</small>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <div class="row g-0">
+            <!-- Sidebar 25% -->
+            <div class="col-lg-3 col-xl-2">
+                <div class="sidebar">
+                    <div id="filter-div"></div>
+                </div>
+            </div>
+
+            <!-- Main content 75% -->
+            <div class="col-lg-9 col-xl-10">
+                <div class="content-area">
+                    
+                    <div class="visualization-container">
+                        <div id="wordcloud-title" style="
+                            margin: 10px; 
+                            font-weight: bold; 
+                            font-size: 20px; 
+                            color: rgb(0, 0, 0);
+                            text-align: center;
+                            background-color: rgba(200, 200, 200, 0.7);
+                            border-radius: 8px;
+                            padding: 10px;
+                            ">
+                            Exception Navigation: Deep dive into the specific error you want to investigate 🖱️(click on the wordcloud)
+                        </div>
+                        <svg width="1100"height="450" id="wordcloud"></svg>
+                    </div>
+
+                    <hr style="border: none; border-top: 2px solid rgb(0, 0, 0); margin-top: 40px; margin-bottom: 20px;">
+
+                    <div id="detail-title" style="
+                        margin-top: 10px; 
+                        font-weight: bold; 
+                        font-size: 20px; 
+                        color: rgb(0, 0, 0);
+                        text-align: left;
+                        ">
+                        Analyze the impact and Find the root cause 🔍
+                    </div>
+                    <div id="detail-description" style="
+                        margin-bottom: 20px; 
+                        font-size: 13px; 
+                        color: rgb(0, 0, 0);
+                        text-align: left;
+                        ">
+                        If you want to reset the filter, click the reset button on the left sidebar.
+                    </div>
+                    <div id="selected-error-message" style="
+                        margin-bottom: 20px; 
+                        font-weight: bold; 
+                        font-size: 13px; 
+                        color: rgb(0, 0, 0);
+                        text-align: left;
+                        ">
+                    </div>  
+
+                    <div class="visualization-container">
+                        <svg width="1100" height="450" id="map"></svg>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="visualization-container-half">
+                                <svg width="500" height="800" id="correlation"></svg>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="visualization-container-half">
+                                <svg width="500" height="800" id="pie"></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <div class="visualization-container">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover text-center">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>S/W Version</th>
+                                        <th>Country</th>
+                                        <th>Network Operator</th>
+                                        <th>RAT</th>
+                                        <th>Error Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div> -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let data, currentFilteredData, filterPanel, dataTable, wordcloud, worldMap, bubbleChart, correlationMatrix, pieChart;
+
+        // Simple navbar height calculation for desktop/laptop only
+        function updateNavbarHeight() {
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                const height = navbar.offsetHeight;
+                document.documentElement.style.setProperty('--navbar-height', `${height}px`);
+            }
+        }
+
+        // Simple setup for desktop/laptop
+        function setupDynamicLayout() {
+            updateNavbarHeight();
+            
+            // Update on window resize (debounced)
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(updateNavbarHeight, 100);
+            });
+        }
+
+        // Loading utility functions
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        // Update functions for each visualization
+        function updateWordCloud(dataToUse = currentFilteredData || data) {
+            if (wordcloud) {
+                wordcloud.update(dataToUse);
+            }
+        }
+
+        function updateMap(dataToUse = currentFilteredData || data) {
+            if (worldMap && worldMap.countries) {
+                worldMap.update(dataToUse);
+            }
+        }
+
+        function updateBubbleChart(dataToUse = currentFilteredData || data) {
+            if (bubbleChart) {
+                bubbleChart.update(dataToUse);
+            }
+        }
+
+        function updateCorrelationMatrix(dataToUse = currentFilteredData || data) {
+            if (correlationMatrix) {
+                correlationMatrix.update(dataToUse);
+            }
+        }
+
+        function updatePieChart(dataToUse = currentFilteredData || data) {
+            if (pieChart) {
+                pieChart.update(dataToUse);
+            }
+        }
+
+        function updateDataTable(dataToUse = currentFilteredData || data) {
+            if (dataTable) {
+                dataTable.update(dataToUse, data.columns);
+            }
+        }
+
+        // Cross-filtering function - updates all visualizations
+        function updateAllVisualizations(filteredData, filters) {
+            currentFilteredData = filteredData;
+            
+            // Show loading for smooth UX
+            showLoading();
+            document.getElementById("selected-error-message").textContent = ``;
+            document.getElementById("detail-description").style.marginBottom = "20px";
+            
+            // Use setTimeout to allow UI to update
+            setTimeout(() => {
+                try {
+                    updateWordCloud(filteredData);
+                    updateMap(filteredData);
+                    updateBubbleChart(filteredData);
+                    updateCorrelationMatrix(filteredData);
+                    updatePieChart(filteredData);
+                    updateDataTable(filteredData);
+                    
+                    console.log(`Updated visualizations with ${filteredData.length} records`, filters);
+                } catch (error) {
+                    console.error('Error updating visualizations:', error);
+                } finally {
+                    hideLoading();
+                }
+            }, 50);
+        }
+
+        // Initialize all components
+        async function initializeComponents() {
+            try {
+                showLoading();
+
+                filterPanel = new FilterPanel("#filter-div");
+                filterPanel.initialize();
+                filterPanel.setFilterChangeCallback(updateAllVisualizations);
+
+                wordcloud = new WordCloud("#wordcloud");
+                wordcloud.initialize();
+
+                worldMap = new WorldMap("#map");
+                await worldMap.initialize();
+
+                bubbleChart = new BubbleChart("#bubble", { multiline: true });
+                bubbleChart.initialize();
+
+                correlationMatrix = new CorrelationMatrix("#correlation");
+                correlationMatrix.initialize();
+
+                pieChart = new PieChart("#pie");
+                pieChart.initialize();
+
+                dataTable = new DataTable("#data-table");
+
+                console.log('All components initialized successfully');
+            } catch (error) {
+                console.error('Error initializing components:', error);
+            }
+        }
+
+        // Load data and setup the application
+        d3.text("https://raw.githubusercontent.com/no-brand/infovis-project/refs/heads/main/preprocessed-20250601-2250.jsonl")
+            .then(async raw => {
+                try {
+                    // Setup dynamic layout first
+                    setupDynamicLayout();
+                    
+                    const logs = raw.trim().split("\n").map(line => JSON.parse(line));
+                    data = logs;
+                    currentFilteredData = data; // Initially show all data
+
+                    console.log(`Loaded ${data.length} records`);
+
+                    // Initialize all components
+                    await initializeComponents();
+
+                    filterPanel.updateData(data);
+
+                    wordcloud.on("click", (event, d) => {
+                        document.getElementById("selected-error-message").textContent = `⚠️ Selected error message : ${d.text}`;
+                        document.getElementById("detail-description").style.marginBottom = "0px";
+                
+                        console.log(d.text);
+                        const backup = currentFilteredData.slice();
+                        currentFilteredData = currentFilteredData.filter(item => item.error.error_message === d.text);
+                        currentFilteredData.slice(0, 3).forEach(item => {
+                            console.log(item);
+                        });
+                        updateMap();
+                        updateCorrelationMatrix();
+                        updatePieChart();
+                        currentFilteredData = backup.slice();
+                    });
+
+                    updateWordCloud();
+                    updateMap();
+                    updateBubbleChart();
+                    updateCorrelationMatrix();
+                    updatePieChart();
+                    updateDataTable();
+
+                    console.log('Application initialized successfully');
+                } catch (error) {
+                    console.error('Error loading or processing data:', error);
+                } finally {
+                    hideLoading();
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load data:', error);
+                hideLoading();
+            });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>
