@@ -190,25 +190,6 @@
                         </div>
                     </div>
 
-                    <!-- <div class="visualization-container">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover text-center">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Model</th>
-                                        <th>S/W Version</th>
-                                        <th>Country</th>
-                                        <th>Network Operator</th>
-                                        <th>RAT</th>
-                                        <th>Error Message</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="data-table">
-                                </tbody>
-                            </table>
-                        </div>
-                    </div> -->
-
                 </div>
             </div>
         </div>
@@ -345,7 +326,7 @@
         }
 
         // Load data and setup the application
-        d3.text("https://raw.githubusercontent.com/no-brand/infovis-project/refs/heads/main/preprocessed-20250601-2250.jsonl")
+        d3.text("https://raw.githubusercontent.com/no-brand/infovis-project/refs/heads/master/preprocessed-20250601-2250.jsonl")
             .then(async raw => {
                 try {
                     // Setup dynamic layout first
